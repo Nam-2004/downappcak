@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tải file Google Drive</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #f5f7fb;
+    margin: 0;
+    padding: 30px 16px;
+    color: #1f2937;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .sub { color: #6b7280; font-size: 14px; margin-bottom: 24px; }
+
+  .btn-all {
+    width: 100%;
+    background: linear-gradient(135deg, #0f9d58, #0b8043);
+    color: #fff;
+    border: none;
+    padding: 18px;
+    font-size: 17px;
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform .1s, box-shadow .2s;
+    box-shadow: 0 6px 20px rgba(15,157,88,.35);
+  }
+  .btn-all:hover  { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(15,157,88,.45); }
+  .btn-all:active { transform: translateY(0); }
+  .btn-all:disabled { opacity: .6; cursor: not-allowed; }
+
+  .status { text-align: center; font-size: 13px; color: #6b7280; margin: 10px 0 26px; min-height: 18px; }
+
+  .item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .item .info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .badge.apk { background: #10b981; }   /* xanh lá */
+  .badge.zip { background: #f59e0b; }   /* vàng cam */
+  .item .name { font-size: 14px; font-weight: 500; word-break: break-all; }
+  .item .idx  { color: #9ca3af; font-size: 12px; margin-right: 6px; }
+  .btn-one {
+    background: #1a73e8;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .btn-one:hover { background: #1557b0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tải xuống 4 file</h1>
+  <p class="sub">Gồm 1 file <b>.zip</b> và 3 file <b>.apk</b>. Bấm nút dưới để tải tất cả.</p>
+
+  <button class="btn-all" id="downloadAll">⬇ TẢI TẤT CẢ (1 ZIP + 3 APK)</button>
+  <div class="status" id="status"></div>
+
+  <div id="list"></div>
+</div>
+
+<script>
+/* ====== DANH SÁCH FILE ======
+   type: 'apk' hoặc 'zip'  -> dùng để hiển thị badge
+================================ */
+const FILES = [
+  { id: '1dFcASPE_fzn_af6swXoSzmvYnNYaDidr', name: 'File 1.apk',       type: 'apk' },
+  { id: '1wX5JlPFrloZo9MMPAdTaxXep0FIV0WIn', name: 'File 2.zip',       type: 'zip' },
+  { id: '1eRa-tCptamu49WReOrYVZnpoi_hMhLCr', name: 'File 3.apk',       type: 'apk' },
+  { id: '1xoAp2MG0hLQjIvCUmPvP3mcM-_8iT-6b', name: 'File 4.apk',       type: 'apk' },
+];
+
+/* Link tải trực tiếp mới của Google - vượt trang xác nhận với file >100MB
+   File .zip và .apk đều dùng chung link này, Google trả về đúng định dạng gốc. */
+function directUrl(id) {
+  return `https://drive.usercontent.google.com/download?id=${id}&export=download&confirm=t`;
+}
+
+/* ====== HIỂN THỊ DANH SÁCH ====== */
+const listEl = document.getElementById('list');
+listEl.innerHTML = FILES.map((f, i) => `
+  <div class="item">
+    <div class="info">
+      <span class="badge ${f.type}">${f.type.toUpperCase()}</span>
+      <span class="name"><span class="idx">${i + 1}.</span>${f.name}</span>
+    </div>
+    <a class="btn-one" href="${directUrl(f.id)}" target="_blank" rel="noopener">Tải</a>
+  </div>
+`).join('');
+
+/* ====== NÚT TẢI TẤT CẢ ====== */
+const btn = document.getElementById('downloadAll');
+const statusEl = document.getElementById('status');
+
+btn.addEventListener('click', async () => {
+  btn.disabled = true;
+  statusEl.textContent = 'Đang bắt đầu tải... vui lòng cho phép trình duyệt tải nhiều file.';
+
+  for (let i = 0; i < FILES.length; i++) {
+    const a = document.createElement('a');
+    a.href = directUrl(FILES[i].id);
+    a.download = '';          // ép trình duyệt tải về
+    a.target = '_blank';      // fallback nếu bị chặn popup
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    statusEl.textContent = `Đã gửi ${i + 1}/${FILES.length}: ${FILES[i].name}`;
+    await new Promise(r => setTimeout(r, 600)); // delay tránh bị chặn
+  }
+
+  statusEl.textContent = '✅ Đã gửi yêu cầu tải 1 ZIP + 3 APK. Kiểm tra thư mục Downloads.';
+  setTimeout(() => { btn.disabled = false; }, 1500);
+});
+</script>
+</body>
+</html>
